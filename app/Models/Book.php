@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany; // PENTING: Import HasMany
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Book extends Model
 {
     use HasFactory;
 
     /**
-     * Mass-assignment protection.
-     * Kolom ini BOLEKEH diisi saat menggunakan Book::create()
+     * Kolom yang bisa diisi secara massal (mass assignment)
      */
     protected $fillable = [
         'title',
@@ -23,12 +23,31 @@ class Book extends Model
     ];
 
     /**
-     * INI ADALAH BAGIAN YANG HILANG/RUSAK
-     * * Relasi: Satu Buku punya BANYAK Bab (Chapter)
+     * Relasi: Satu Buku memiliki banyak Chapter
      */
     public function chapters(): HasMany
     {
-        // Urutkan otomatis berdasarkan nomor bab
         return $this->hasMany(Chapter::class)->orderBy('chapter_number', 'asc');
+    }
+
+    /**
+     * Gunakan 'slug' sebagai route model binding key,
+     * agar URL seperti /books/judul-buku berfungsi otomatis.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    /**
+     * Event booting untuk otomatis membuat slug dari title (opsional)
+     */
+    protected static function booted()
+    {
+        static::creating(function ($book) {
+            if (empty($book->slug)) {
+                $book->slug = Str::slug($book->title);
+            }
+        });
     }
 }

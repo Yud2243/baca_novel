@@ -7,18 +7,21 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts --><link rel="preconnect" href="https://fonts.bunny.net">
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->@vite(['resources/css/app.css', 'resources/js/app.js'])
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
         <!-- 
-          bg-gray-100 agar ada sedikit kontras dengan konten putih
-        --><div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+          Ganti bg-gray-100 jadi bg-white agar latar belakang putih bersih
+        -->
+        <div class="min-h-screen bg-white dark:bg-white">
             @include('layouts.navigation')
 
-            <!-- Page Heading (Kita biarkan kosong atau hapus nanti jika tidak diperlukan) -->@isset($header)
+            @isset($header)
                 <header class="bg-white dark:bg-gray-800 shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
@@ -26,7 +29,7 @@
                 </header>
             @endisset
 
-            <!-- Page Content --><main>
+            <main>
                 {{ $slot }}
             </main>
         </div>
