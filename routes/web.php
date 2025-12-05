@@ -4,7 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BookController as AdminBookController;
 use App\Http\Controllers\Admin\ChapterController as AdminChapterController;
-use App\Http\Controllers\BookReaderController; // Pastikan ini ada
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\BookReaderController;
+use App\Http\Controllers\Penulis\BookController as PenulisBookController;
+use App\Http\Controllers\Penulis\ChapterController as PenulisChapterController;
+use App\Http\Controllers\Penulis\ApplyController; // Controller untuk Pengajuan Penulis
+use App\Http\Controllers\PenulisController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,50 +17,61 @@ use App\Http\Controllers\BookReaderController; // Pastikan ini ada
 |--------------------------------------------------------------------------
 */
 
-// Rute Halaman Depan
+// Halaman depan
 Route::get('/', function () {
     return view('welcome');
 });
 
-// === GRUP UNTUK USER YANG SUDAH LOGIN ===
+// USER BIASA (termasuk dashboard utama)
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Rute utama (memanggil BookReaderController@beranda untuk mendapatkan data books)
+    Route::get('/dashboard', [BookReaderController::class, 'beranda'])->name('dashboard');
     
-    // Rute Dashboard User Biasa (BERANDA)
-    // Ini mengarah ke Controller untuk ambil data
-    Route::get('/dashboard', [BookReaderController::class, 'beranda'])
-         ->name('dashboard');
+    // Rute Buku
+    Route::get('/books', [BookReaderController::class, 'index'])->name('books.index');
+    Route::get('/books/{book:slug}', [BookReaderController::class, 'show'])->name('books.show');
+    Route::get('/books/{book:slug}/chapter/{chapter_number}', [BookReaderController::class, 'showChapter'])->name('books.chapter');
 
-    // Rute User Profile (Bawaan Breeze)
+    // Rute Profil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTE UNTUK PEMBACA ---
-    
-    // 1. Halaman Katalog (Daftar semua buku)
-    Route::get('/books', [BookReaderController::class, 'index'])->name('books.index');
-
-    // 2. Halaman Detail Buku (Info & Daftar Bab)
-    Route::get('/books/{book:slug}', [BookReaderController::class, 'show'])->name('books.show');
-
-    // 3. Halaman BACA (Konten Bab)
-    Route::get('/books/{book:slug}/chapter/{chapter_number}', [BookReaderController::class, 'showChapter'])
-         ->name('books.chapter.show');
+    // PENGURUSAN PENGAJUAN PENULIS
+    Route::prefix('penulis/apply')
+        ->name('penulis.apply.')
+        ->group(function () {
+            // GET: /penulis/apply -> Tampilkan form (jika perlu)
+            Route::get('/', [ApplyController::class, 'create'])->name('create');
+            Route::post('/', [ApplyController::class, 'store'])->name('store');
+        });
 });
 
 
-// === GRUP RUTE ADMIN ===
-Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(function () {
-    
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+// PENULIS (Hanya yang memiliki role 'penulis')
+Route::middleware(['auth', 'verified', 'role:penulis'])
+    ->prefix('penulis')
+    ->name('penulis.')
+    ->group(function () {
+        Route::get('/dashboard', fn() => view('penulis.dashboard'))->name('dashboard');
+        Route::resource('books', PenulisBookController::class);
+        Route::resource('books.chapters', PenulisChapterController::class);
+    });
 
-    Route::resource('books', AdminBookController::class);
-    Route::resource('books.chapters', AdminChapterController::class);
+// ADMIN
+Route::middleware(['auth', 'is_admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
+        Route::resource('users', UserController::class);
+        Route::resource('books', AdminBookController::class);
+        Route::resource('books.chapters', AdminChapterController::class);
+        
+        // Rute untuk Approve/Reject Penulis
+        Route::post('users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
+        Route::post('users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
+    });
 
-});
-
-
-// Rute Autentikasi (Bawaan Breeze)
+// Auth Breeze
 require __DIR__.'/auth.php';

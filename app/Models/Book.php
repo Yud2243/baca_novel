@@ -5,22 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class Book extends Model
 {
     use HasFactory;
 
-    /**
-     * Kolom yang bisa diisi secara massal (mass assignment)
-     */
     protected $fillable = [
         'title',
         'author',
         'description',
         'cover_path',
         'slug',
+        'user_id', // <-- Tambah ini
     ];
+
+    /**
+     * Relasi: Buku dimiliki oleh User (Penulis)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Relasi: Satu Buku memiliki banyak Chapter
@@ -30,18 +37,11 @@ class Book extends Model
         return $this->hasMany(Chapter::class)->orderBy('chapter_number', 'asc');
     }
 
-    /**
-     * Gunakan 'slug' sebagai route model binding key,
-     * agar URL seperti /books/judul-buku berfungsi otomatis.
-     */
     public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    /**
-     * Event booting untuk otomatis membuat slug dari title (opsional)
-     */
     protected static function booted()
     {
         static::creating(function ($book) {
