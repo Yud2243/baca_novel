@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import './auth.css';
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+    }
+}
+
+.leaf {
+    position: absolute;
+    top: -10vh;
+    width: 24px;
+    height: 24px;
+    background-image: url('../images/leaf.png'); /* Ganti kalau daun lo beda */
+    background-size: cover;
+    animation: fall linear infinite;
+    opacity: 0.8;
+}

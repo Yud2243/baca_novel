@@ -1,0 +1,62 @@
+/* Background */
+body {
+    background: url('/images/image.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Container untuk Login & Register */
+.auth-container {
+    width: 420px;
+    margin: 60px auto;
+    padding: 35px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    animation: fadeDown 0.6s ease;
+}
+
+/* Animasi */
+@keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Input styling */
+.auth-container input {
+    border-radius: 10px;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+/* Label */
+.auth-container label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Tombol */
+.auth-container button {
+    background-color: #34a853;
+    border: none;
+    padding: 12px 0;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.auth-container button:hover {
+    background-color: #2e8c47;
+}
+
+/* Link bawah */
+.auth-container a {
+    color: #0b61d8;
+    font-weight: 600;
+}
