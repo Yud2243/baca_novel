@@ -12,67 +12,76 @@ class BookReaderController extends Controller
      * 🏠 Halaman Beranda (Dashboard Pembaca)
      * Menampilkan beberapa buku rekomendasi.
      */
-    public function beranda()
+   public function beranda()
 {
-    // Ambil 6 buku terbaru
-    $rekomendasiBooks = \App\Models\Book::latest()->take(6)->get();
+    $rekomendasiBooks = Book::where('status', 'approved')
+        ->latest()
+        ->take(6)
+        ->get();
 
-    // Kirim ke view 'dashboard'
     return view('dashboard', [
         'books' => $rekomendasiBooks,
     ]);
 }
 
 
+
     /**
      * 📚 Halaman Daftar Semua Buku (Katalog)
      */
-    public function index(Request $request)
-    {
-        $query = Book::query();
+  public function index(Request $request)
+{
+    $query = Book::query()
+        ->where('status', 'approved');
 
-        // Jika ada pencarian
-        if ($request->has('q') && $request->q !== '') {
-            $query->where('title', 'like', '%' . $request->q . '%')
-                  ->orWhere('author', 'like', '%' . $request->q . '%');
-        }
+    // 🔍 SEARCH
+    if ($request->filled('q')) {
+        $search = $request->q;
 
-        $books = $query->latest()->paginate(12);
-
-        return view('books.index', [
-            'books' => $books,
-        ]);
+        $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+              ->orWhere('author', 'like', "%{$search}%");
+        });
     }
+
+    // PAGINATION (WAJIB supaya links() jalan)
+    $books = $query->latest()->paginate(9)->withQueryString();
+
+    return view('books.index', compact('books'));
+}
+
+
+
+
 
     /**
      * 📖 Halaman Detail Buku
      * Menampilkan informasi buku & daftar bab-nya.
      */
-    public function show(Book $book)
-    {
-        // Ambil daftar bab dari relasi jika sudah dibuat
-        $chapters = $book->chapters()->orderBy('chapter_number')->get();
+   public function show(Book $book)
+{
+    abort_if($book->status !== 'approved', 404);
 
-        return view('books.show', [
-            'book' => $book,
-            'chapters' => $chapters,
-        ]);
-    }
+    $book->load('chapters');
+
+    return view('books.show', compact('book'));
+}
+
 
     /**
      * 📘 Halaman Baca Bab
      * Menampilkan isi satu bab berdasarkan nomor urut.
      */
-    public function showChapter(Book $book, $chapter_number)
-    {
-        // Ambil bab berdasarkan nomor urut
-        $chapter = $book->chapters()
-                        ->where('chapter_number', $chapter_number)
-                        ->firstOrFail();
+   public function showChapter(Book $book, $chapter_number)
+{
+    abort_if($book->status !== 'approved', 404);
 
-        return view('books.chapter', [
-            'book' => $book,
-            'chapter' => $chapter,
-        ]);
-    }
+    $chapter = $book->chapters()
+                    ->where('chapter_number', $chapter_number)
+                    ->firstOrFail();
+
+    return view('books.chapter', compact('book', 'chapter'));
+}
+
+
 }

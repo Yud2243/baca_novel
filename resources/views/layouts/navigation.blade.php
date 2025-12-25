@@ -17,9 +17,10 @@
                     <x-nav-link :href="route('books.index')" :active="request()->routeIs('books.*')">
                         {{ __('Novel') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('dashboard')" :active="false">
-                        {{ __('Tentang Kami') }}
+                   <x-nav-link :href="route('about')" :active="request()->routeIs('about')">
+                    {{ __('Tentang Kami') }}
                     </x-nav-link>
+
 
                     {{-- Admin Panel --}}
                     @auth
@@ -29,12 +30,15 @@
                             </x-nav-link>
                         @endif
 
-                        {{-- Penulis Panel --}}
-                        @if(auth()->user()->isPenulis())
-                            <x-nav-link :href="route('penulis.dashboard')" :active="request()->routeIs('penulis.*')">
-                                {{ __('Penulis Panel') }}
-                            </x-nav-link>
-                        @endif
+                {{-- Penulis Panel --}}
+                @if(auth()->user()->isPenulis())
+                <x-nav-link
+                :href="route('penulis.books.index')"
+                :active="request()->routeIs('penulis.*')">
+                {{ __('Penulis Panel') }}
+                </x-nav-link>
+                @endif
+
                     @endauth
                 </div>
             </div>
@@ -43,16 +47,25 @@
             <div class="hidden sm:flex sm:items-center space-x-5">
 
                 <!-- Search -->
-                <div class="relative flex items-center bg-green-600 dark:bg-green-700 rounded-full px-4 py-2 shadow-sm">
-                    <input type="text" placeholder="Search..."
-                        class="bg-transparent border-none focus:ring-0 text-white placeholder-green-200 text-sm w-40">
-                    <button class="text-green-200 hover:text-white">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </button>
-                </div>
+               <form action="{{ route('books.index') }}" method="GET"
+      class="relative flex items-center bg-green-600 dark:bg-green-700 rounded-full px-4 py-2 shadow-sm">
+    
+    <input
+        type="text"
+        name="q"
+        value="{{ request('q') }}"
+        placeholder="Cari novel..."
+        class="bg-transparent border-none focus:ring-0 text-white placeholder-green-200 text-sm w-40"
+    >
+
+    <button type="submit" class="text-green-200 hover:text-white">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+    </button>
+</form>
+
 
                 <!-- IF GUEST (belum login) -->
                 @guest
@@ -60,10 +73,7 @@
                         class="px-4 py-2 bg-white text-green-700 rounded-lg shadow hover:bg-green-100 transition">
                         Login
                     </a>
-                    <a href="{{ route('register') }}"
-                        class="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition">
-                        Register
-                    </a>
+                    
                 @endguest
 
                 <!-- IF AUTH (sudah login) -->
@@ -131,7 +141,7 @@
                 {{ __('Novel') }}
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('dashboard')" :active="false">
+            <x-responsive-nav-link :href="route('about')" :active="false">
                 {{ __('About') }}
             </x-responsive-nav-link>
 
@@ -143,8 +153,9 @@
                 @endif
 
                 @if(auth()->user()->isPenulis())
-                    <x-responsive-nav-link :href="route('penulis.dashboard')">
-                        {{ __('Penulis Panel') }}
+                    <x-responsive-nav-link :href="route('penulis.books.index')"
+                :active="request()->routeIs('penulis.*')">
+                {{ __('Penulis Panel') }}
                     </x-responsive-nav-link>
                 @endif
             @endauth

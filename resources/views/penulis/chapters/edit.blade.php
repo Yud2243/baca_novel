@@ -1,23 +1,46 @@
 <x-app-layout>
-    <h1>Edit Chapter: {{ $chapter->title }} (Buku: {{ $book->title }})</h1>
+    <div class="max-w-3xl mx-auto py-10 px-4">
 
-    <form action="{{ route('penulis.chapters.update', [$book->id, $chapter->id]) }}" method="POST">
-        @csrf
-        @method('PUT')
+        <h1 class="text-2xl font-bold mb-6">
+            Edit Chapter — {{ $book->title }}
+        </h1>
 
-        <div class="mb-3">
-            <label for="chapter_number" class="form-label">Nomor Chapter</label>
-            <input type="number" name="chapter_number" id="chapter_number" class="form-control" value="{{ $chapter->chapter_number }}" required>
-        </div>
-        <div class="mb-3">
-            <label for="title" class="form-label">Judul Chapter</label>
-            <input type="text" name="title" id="title" class="form-control" value="{{ $chapter->title }}" required>
-        </div>
-        <div class="mb-3">
-            <label for="content" class="form-label">Isi Chapter</label>
-            <textarea name="content" id="content" class="form-control" rows="10" required>{{ $chapter->content }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('penulis.chapters.index', $book->id) }}" class="btn btn-secondary">Batal</a>
-    </form>
+        <form method="POST"
+              action="{{ route('penulis.books.chapters.update', [$book, $chapter]) }}"
+              class="space-y-6">
+
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="block font-semibold mb-1">Judul Chapter</label>
+                <input type="text"
+                       name="title"
+                       value="{{ old('title', $chapter->title) }}"
+                       class="w-full border rounded-lg px-4 py-2"
+                       required>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-1">Isi Chapter</label>
+                <textarea name="content"
+                          rows="12"
+                          class="w-full border rounded-lg px-4 py-2"
+                          required>{{ old('content', $chapter->content) }}</textarea>
+            </div>
+
+            <div class="flex justify-between">
+                <a href="{{ route('penulis.books.show', $book) }}"
+                   class="px-4 py-2 bg-gray-200 rounded-lg">
+                    ← Kembali
+                </a>
+
+                <button type="submit"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Simpan Perubahan
+                </button>
+            </div>
+
+        </form>
+    </div>
 </x-app-layout>

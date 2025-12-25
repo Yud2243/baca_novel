@@ -10,63 +10,79 @@ use Illuminate\Support\Facades\Auth;
 
 class ChapterController extends Controller
 {
-    // Daftar semua chapter dari buku milik penulis
-    public function index(Book $book)
-    {
-        if($book->user_id !== Auth::id()) abort(403);
-        $chapters = $book->chapters;
-        return view('penulis.chapters.index', compact('book', 'chapters'));
-    }
-
-    // Form tambah chapter baru
     public function create(Book $book)
     {
-        if($book->user_id !== Auth::id()) abort(403);
+        abort_unless($book->user_id === Auth::id(), 403);
         return view('penulis.chapters.create', compact('book'));
     }
 
-    // Simpan chapter baru
     public function store(Request $request, Book $book)
     {
-        if($book->user_id !== Auth::id()) abort(403);
+        abort_unless($book->user_id === Auth::id(), 403);
 
-        $book->chapters()->create([
-            'title' => $request->title,
-            'content' => $request->content,
-            'chapter_number' => $request->chapter_number,
-            'status' => 'pending', // harus divalidasi admin
+        $request->validate([
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
         ]);
 
-        return redirect()->route('penulis.chapters.index', $book->id);
+        $nextNumber = $book->chapters()->max('chapter_number') + 1;
+
+        Chapter::create([
+            'book_id'        => $book->id,
+            'title'          => $request->title,
+            'content'        => $request->content,
+            'chapter_number' => $nextNumber ?: 1,
+        ]);
+
+        return redirect()
+            ->route('penulis.books.show', $book)
+            ->with('success', 'Chapter berhasil ditambahkan.');
     }
 
-    // Form edit chapter
     public function edit(Book $book, Chapter $chapter)
     {
-        if($book->user_id !== Auth::id() || $chapter->book_id !== $book->id) abort(403);
+        abort_unless(
+            $book->user_id === Auth::id() &&
+            $chapter->book_id === $book->id,
+            403
+        );
+
         return view('penulis.chapters.edit', compact('book', 'chapter'));
     }
 
-    // Update chapter
     public function update(Request $request, Book $book, Chapter $chapter)
     {
-        if($book->user_id !== Auth::id() || $chapter->book_id !== $book->id) abort(403);
+        abort_unless(
+            $book->user_id === Auth::id() &&
+            $chapter->book_id === $book->id,
+            403
+        );
 
-        $chapter->update([
-            'title' => $request->title,
-            'content' => $request->content,
-            'chapter_number' => $request->chapter_number,
-            'status' => 'pending', // harus divalidasi ulang
+        $request->validate([
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
         ]);
 
-        return redirect()->route('penulis.chapters.index', $book->id);
+        $chapter->update([
+            'title'   => $request->title,
+            'content' => $request->content,
+        ]);
+
+        return redirect()
+            ->route('penulis.books.show', $book)
+            ->with('success', 'Chapter diperbarui.');
     }
 
-    // Hapus chapter
     public function destroy(Book $book, Chapter $chapter)
     {
-        if($book->user_id !== Auth::id() || $chapter->book_id !== $book->id) abort(403);
+        abort_unless(
+            $book->user_id === Auth::id() &&
+            $chapter->book_id === $book->id,
+            403
+        );
+
         $chapter->delete();
-        return redirect()->route('penulis.chapters.index', $book->id);
+
+        return back()->with('success', 'Chapter dihapus.');
     }
 }

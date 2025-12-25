@@ -8,8 +8,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\BookReaderController;
 use App\Http\Controllers\Penulis\BookController as PenulisBookController;
 use App\Http\Controllers\Penulis\ChapterController as PenulisChapterController;
-use App\Http\Controllers\Penulis\ApplyController; // Controller untuk Pengajuan Penulis
-use App\Http\Controllers\PenulisController;
+use App\Http\Controllers\Penulis\ApplyController;
+use App\Http\Controllers\Admin\PenulisController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,15 +21,21 @@ use App\Http\Controllers\PenulisController;
 use App\Models\Book;
 
 Route::get('/', function () {
-    $books = Book::latest()->take(6)->get();
+    $books = Book::where('status', 'approved')
+                 ->latest()
+                 ->take(6)
+                 ->get();
+
     return view('welcome', compact('books'));
 });
 
+Route::get('/about', function () {
+    return view('about');
+})->name('about');
 
 
-// USER BIASA (termasuk dashboard utama)
+// USER BIASA
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Rute utama (memanggil BookReaderController@beranda untuk mendapatkan data books)
     Route::get('/dashboard', [BookReaderController::class, 'beranda'])->name('dashboard');
     
     // Rute Buku
@@ -37,31 +43,62 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/books/{book:slug}', [BookReaderController::class, 'show'])->name('books.show');
     Route::get('/books/{book:slug}/chapter/{chapter_number}', [BookReaderController::class, 'showChapter'])->name('books.chapter');
 
-    // Rute Profil
+    // Profil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // PENGURUSAN PENGAJUAN PENULIS
+    // Pengajuan penulis
     Route::prefix('penulis/apply')
         ->name('penulis.apply.')
         ->group(function () {
-            // GET: /penulis/apply -> Tampilkan form (jika perlu)
             Route::get('/', [ApplyController::class, 'create'])->name('create');
             Route::post('/', [ApplyController::class, 'store'])->name('store');
         });
 });
 
-
-// PENULIS (Hanya yang memiliki role 'penulis')
+// PENULIS
 Route::middleware(['auth', 'verified', 'role:penulis'])
     ->prefix('penulis')
     ->name('penulis.')
     ->group(function () {
-        Route::get('/dashboard', fn() => view('penulis.dashboard'))->name('dashboard');
+
+        Route::get('/dashboard', fn () => view('penulis.dashboard'))
+            ->name('dashboard');
+
+        // Buku milik penulis
         Route::resource('books', PenulisBookController::class);
-        Route::resource('chapters', PenulisChapterController::class);
+
+        // ===============================
+        // CHAPTER (NESTED KE BOOK)
+        // ===============================
+        Route::get(
+            'books/{book}/chapters/create',
+            [PenulisChapterController::class, 'create']
+        )->name('books.chapters.create');
+
+        Route::post(
+            'books/{book}/chapters',
+            [PenulisChapterController::class, 'store']
+        )->name('books.chapters.store');
+
+        Route::get(
+            'books/{book}/chapters/{chapter}/edit',
+            [PenulisChapterController::class, 'edit']
+        )->name('books.chapters.edit');
+
+        Route::put(
+            'books/{book}/chapters/{chapter}',
+            [PenulisChapterController::class, 'update']
+        )->name('books.chapters.update');
+
+        Route::delete(
+            'books/{book}/chapters/{chapter}',
+            [PenulisChapterController::class, 'destroy']
+        )->name('books.chapters.destroy');
     });
+
+
 
 // ADMIN
 Route::middleware(['auth', 'is_admin'])
@@ -69,28 +106,26 @@ Route::middleware(['auth', 'is_admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
+
+        // Users
         Route::resource('users', UserController::class);
-        Route::resource('books', AdminBookController::class);
+        Route::get('penulis/applicants', [UserController::class, 'penulisApplicants'])->name('penulis.applicants');
+        Route::post('penulis/{user}/approve', [UserController::class, 'approvePenulis'])->name('penulis.approve');
+        Route::post('penulis/{user}/reject', [UserController::class, 'rejectPenulis'])->name('penulis.reject');
+
+        // Buku
+        Route::get('/books', [AdminBookController::class, 'adminIndex'])->name('books.index');
+
+        // Halaman daftar buku pending (GET)
+        Route::get('/books/approve', [AdminBookController::class, 'approvePage'])->name('books.approve');
+
+        // Aksi approve/reject buku
+        Route::post('/books/{book}/approve', [AdminBookController::class, 'approve'])->name('books.approve.action');
+        Route::post('/books/{book}/reject', [AdminBookController::class, 'reject'])->name('books.reject');
+
+        // Chapters admin
         Route::resource('books.chapters', AdminChapterController::class);
-        Route::get('penulis/applicants', [UserController::class, 'penulisApplicants'])
-            ->name('penulis.applicants');
-        Route::post('penulis/{user}/approve', [UserController::class, 'approvePenulis'])
-            ->name('penulis.approve');
-        Route::post('penulis/{user}/reject', [UserController::class, 'rejectPenulis'])
-            ->name('penulis.reject');
-        Route::delete('/users/{id}', [UserController::class, 'destroy'])
-            ->name('admin.users.destroy');
-        // Rute untuk Approve/Reject Penulis
-        Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
-        Route::post('/admin/users/{user}/approve', [UserController::class, 'approve'])->name('admin.users.approve');
-        Route::post('/admin/users/{user}/reject', [UserController::class, 'reject'])->name('admin.users.reject');
-        Route::get('/admin/books', [BookController::class, 'adminIndex'])->name('admin.books.index');
-
-    Route::post('/admin/books/{book}/approve', [BookController::class, 'approve'])->name('admin.books.approve');
-
-    Route::post('/admin/books/{book}/reject', [BookController::class, 'reject'])->name('admin.books.reject');
-
- });
+    });
 
 // Auth Breeze
 require __DIR__.'/auth.php';

@@ -16,7 +16,7 @@
                     <div class="mt-6">
                         <!-- Tombol utama -->
                     <div class="mt-6">
-                        <a href="{{ route('penulis.books.index') }}" 
+                        <a href="#" 
                            class="py-2 px-4 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200 shadow-sm">
                             Kelola Buku
                         </a>

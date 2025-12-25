@@ -153,5 +153,12 @@ public function reject(Request $request, Book $book)
 
     return redirect()->back()->with('success', 'Buku ditolak!');
 }
+public function approvePage()
+{
+    // Ambil semua buku dengan status pending
+    $books = Book::where('status', 'pending')->with('user')->latest()->get();
+
+    return view('admin.books.approve', compact('books'));
+}
 
 }
